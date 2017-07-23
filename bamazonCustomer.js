@@ -28,7 +28,7 @@ function displayAllItems() {
 		} else {
 			res.forEach(function (row) {
 				console.log("id: "+row.item_id + " - " + "product name: "+row.product_name 
-				+ " - " + "price "+row.price);
+				+ " - " + "price: "+row.price);
 
 			})
 			beginShopping();	
@@ -62,10 +62,9 @@ function beginShopping() {
 	]).then(function(answers) {
 		connection.query("SELECT stock_quantity FROM products WHERE ?", { item_id: answers.id }, 
 			function(err, res) {
-		        console.log(res[0].stock_quantity);
 		        if (answers.quantity > res[0].stock_quantity) {
 		        	console.log("Insufficient Quantity!");
-		        	return;
+		        	beginShopping();
 		        } else {
 		        	fulfillOrder(answers.id, answers.quantity, res[0].stock_quantity)
 		        }
@@ -91,7 +90,26 @@ function fulfillOrder(id, quantity, stock) {
 	connection.query("SELECT price FROM products WHERE ?", {item_id: id},
 		function(error, result) {
 			console.log("your total is: "+(quantity*result[0].price));
+			buyMore();
 		}
 	);
+	
+}
+
+function buyMore() {
+	inquirer.prompt([
+		{
+		type: "confirm",
+		message: "Make another purchase?",
+		name: "keepshopping",
+		default: true
+		}
+		]).then(function(answers) {
+			if (answers.keepshopping) {
+				displayAllItems();
+			} else {
+				connection.end();
+			}
+		});
 }
 
