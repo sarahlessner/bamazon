@@ -54,7 +54,7 @@ function viewProductSales() {
 		});
 		res.forEach(function(row) {
 			var totalProfit = (row['SUM(products.product_sales)'] - row.over_head_costs);
-			//added this because manager could add product/department and it would not be reflected in departments table
+			//added this because manager could add product/department which may not be reflected in departments table
 			if(!row.department_id) {
 				connection.query("INSERT INTO departments SET ?",
 			    {
