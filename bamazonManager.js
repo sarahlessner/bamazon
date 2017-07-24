@@ -179,10 +179,11 @@ function addNewProduct() {
 		      product_name: answers.name,
 		      department_name: answers.dept,
 		      price: answers.price,
-		      stock_quantity: answers.quantity
+		      stock_quantity: answers.quantity,
+		      product_sales: 0
 		    },
 		    function(err, res) {
-		      console.log(res.affectedRows + " product(s) inserted!\n");
+		      console.log("product added!");
 		      viewProductsForSale();
 		    }
 	  	);

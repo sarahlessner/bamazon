@@ -73,6 +73,7 @@ function beginShopping() {
 }
 
 function fulfillOrder(id, quantity, stock) {
+
 	connection.query("UPDATE products SET ? WHERE ?",
     [
       {
@@ -87,13 +88,25 @@ function fulfillOrder(id, quantity, stock) {
  
     }
   );
-	connection.query("SELECT price FROM products WHERE ?", {item_id: id},
-		function(error, result) {
-			console.log("your total is: "+(quantity*result[0].price));
-			buyMore();
+	connection.query("SELECT * FROM products WHERE ?", {item_id: id},
+		function(error, result) {	
+			var total = result[0].price*quantity;
+			console.log("your total is: "+total);
+			connection.query("UPDATE products SET? WHERE?",
+			[
+		      {
+		        product_sales: result[0].product_sales + total
+		      },
+		      {
+		        item_id: id
+		      }
+		    ],	
+		    function(err, res) {
+		 	  	buyMore();
+		    }
+			);
 		}
-	);
-	
+	);	
 }
 
 function buyMore() {
