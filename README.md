@@ -23,10 +23,10 @@ Amazon-like storefront using SQL database(s) that allows initial choice of user 
         * lists every available item from 'products' table: the item IDs, names, prices, and quantities.
 
     * **View Low Inventory**
-        *lists all items with an inventory count lower than five.
+        * lists all items with an inventory count lower than five.
 
     * **Add to Inventory**
-        *prompts manager for ID and quantity to add to any current item
+        * prompts manager for ID and quantity to add to any current item
 
     * **Add New Product**
         * prompts manager for name, price, quantity and creates a completely new item from the input to add to 'products'
