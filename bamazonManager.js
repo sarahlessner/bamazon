@@ -40,9 +40,12 @@ exports.managerMainMenu = function() {
 		        } else if (answers.list === 'View Low Inventory'){
 		        	viewLowInventory();
 		        } else if (answers.list === 'Add to Inventory'){
+		        	//pass i as argument to view products so it will call add inventory
 		        	var i = "inventory";
+		        	//call function to view products before adding to inventory
 					viewProductsForSale(i);
 		        } else if (answers.list === 'Add New Product'){
+		        	//same as add to inventory - will display all current and prompt for new product
 		        	var p = "product";
 		        	viewProductsForSale(p);
 		        } else if (answers.list === 'Go to Main Menu'){
@@ -58,6 +61,7 @@ exports.managerMainMenu = function() {
 function viewProductsForSale(x) {
 	connection.query("SELECT * FROM products",
 	 function(err, res) {
+	 	//create fancy table to display products
 	 	var table = new Table({
 		    head: ['id', 'product name', 'price', 'quantity'], 
 		    colWidths: [10, 30, 20, 20]
@@ -66,11 +70,13 @@ function viewProductsForSale(x) {
 			throw err;
 		} else {
 			res.forEach(function (row) {
+				//log relevant results to table
 				table.push( [row.item_id, row.product_name, row.price, row.stock_quantity]
 				);
 				// console.log("id: "+row.item_id +" - "+"product name: "+row.product_name 
 				// +" - "+"price: "+row.price+" - "+"quantity: "+row.stock_quantity);
 			})
+			//displays table to console
 			console.log(table.toString());
 			if (!x) {
 			exports.managerMainMenu();	
@@ -86,6 +92,7 @@ function viewProductsForSale(x) {
 function viewLowInventory() {
 	connection.query("SELECT * FROM products",
 	 function(err, res) {
+	 	//creates table to display low inventory
 	 	var table = new Table({
 		    head: ['id', 'product name','quantity'], 
 		    colWidths: [10, 30, 20]
@@ -93,20 +100,24 @@ function viewLowInventory() {
 		if (err) {
 			throw err;
 		} else {
+			//keep track of IF there is any low inventory
 			var lowCounter = 0;
 			res.forEach(function (row) {
 				if (row.stock_quantity < 5) {
+					//add to low inventory counter
 					lowCounter++;
+					//push all low inventory to table
 					table.push( [row.item_id, row.product_name, row.stock_quantity]
 					);
 					// console.log("id: "+row.item_id+" - item: "+row.product_name+" - quantity: "+row.stock_quantity);
 				} 
 			})
-
+			//if there is no low inventory
 			if (lowCounter === 0) {
 				console.log("You're well stocked!");
 				viewProductsForSale();
 			} else {
+				//displays table to console and return to mm
 				console.log(table.toString());
 				exports.managerMainMenu();
 			}
@@ -139,6 +150,7 @@ function addToInventory() {
         }
 	  }
 	]).then(function(answers) {
+		//access item to have stock updated and add managers quantity entered into current stock
 		connection.query("SELECT stock_quantity FROM products WHERE ?", { item_id: answers.id },
 			function(err, res) {
 				connection.query("UPDATE products SET ? WHERE ?",
@@ -153,6 +165,7 @@ function addToInventory() {
 				    function(error, result) {
 
 				      console.log(answers.quantity + " added!");
+				      //display products for sale after updating to see update
 				      viewProductsForSale();
 				    }	
       			);
@@ -192,6 +205,7 @@ function addNewProduct() {
 	  },
 	  
 	]).then(function(answers) {
+		//check if department exists (departments created in supervisor view)
 		connection.query("SELECT department_name FROM departments WHERE ?",
 			{
 				department_name: answers.dept
@@ -202,6 +216,7 @@ function addNewProduct() {
 		      	console.log("department does not exist - must add departments in supervisor view");
 		      	exports.managerMainMenu();
 		      } else {
+		      	//if department exists add product to products table
 		      	connection.query("INSERT INTO products SET ?",
 				    {
 				      product_name: answers.name,
@@ -212,6 +227,7 @@ function addNewProduct() {
 				    },
 				    function(err, res) {
 				      console.log("product added!");
+				      //view all products again
 				      viewProductsForSale();
 				    }
 			 	 );

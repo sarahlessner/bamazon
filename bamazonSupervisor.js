@@ -17,12 +17,13 @@ connection.connect(function(err) {
 	if (err) throw err;
 });
 
+//callback to start menu
 var myMMCallback;
 exports.setMMCallback = function(mmCallback) {
 	myMMCallback = mmCallback;
 }
 
-
+//supervisor view menu
 exports.supervisorMainMenu = function() {
 	inquirer.prompt ([
 	  {	
@@ -46,29 +47,39 @@ exports.supervisorMainMenu = function() {
 }
 
 
-
+//view all departments overhead, sales and total profit
 function viewProductSales() {
+	//join products and departments tables by department name, combine product sales by department
 	var query = "SELECT departments.department_id, departments.department_name, departments.over_head_costs, SUM(products.product_sales)";
 	query += "FROM products RIGHT JOIN departments ON products.department_name = departments.department_name ";
 	query += "GROUP BY departments.department_id, products.department_name";
 	connection.query(query, function(err, res){
+		//create table to display product sales
 		var table = new Table({
 		    head: ['id', 'department name', 'overhead', 'product sales', 'total profit'], 
 		    colWidths: [10, 30, 20, 20, 20]
 		});
 		res.forEach(function(row) {
+			//if there haven't been any sales yet, change null to 0 so table creation doesn't throw error
+			if (row['SUM(products.product_sales)'] === null) {
+				row['SUM(products.product_sales)'] = 0;
+			}
+			//calculate total profit - difference bt sales and overhead
 			var totalProfit = (row['SUM(products.product_sales)'] - row.over_head_costs);
-			//added this because manager could add product/department which may not be reflected in departments table
+			//push results and profit calc to table
+			console.log(row.department_id, row.department_name, row.over_head_costs, row['SUM(products.product_sales)'], totalProfit);
 			table.push(
-			    [row.department_id, row.department_name, row.over_head_costs, row['SUM(products.product_sales)'], totalProfit ]
+			    [row.department_id, row.department_name, row.over_head_costs, row['SUM(products.product_sales)'], totalProfit]
 			);	
 			
 		});
+		//display table and main menu
 		console.log(table.toString());
 		exports.supervisorMainMenu();
 	});
 }
 
+//prompts for info necessary to create a new department
 function createDept() {
 	inquirer.prompt ([
 	  {
@@ -86,6 +97,7 @@ function createDept() {
 	  }
 	  
 	]).then(function(answers) {
+		//insert answers into departments table
 		connection.query("INSERT INTO departments SET ?",
 		    {
 		      department_name: answers.dept,
