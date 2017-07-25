@@ -1,5 +1,6 @@
 var mysql = require("mysql");
 var inquirer = require("inquirer");
+var Table = require('cli-table');
 
 var connection = mysql.createConnection({
 	host: "localhost",
@@ -15,12 +16,12 @@ var connection = mysql.createConnection({
 connection.connect(function(err) {
 	if (err) throw err;
 	console.log("connected as id " + connection.threadId);
-	mainMenu();
+	managerMainMenu();
 	
 });
 
 //display menu of options on load
-function mainMenu() {
+function managerMainMenu() {
 	inquirer.prompt ([
 		{
 	    type: "list",
@@ -49,21 +50,28 @@ function mainMenu() {
 		        }
       	});
 	});
-}
+};
 //function to list every available item: the item IDs, names, prices, and quantities.
 function viewProductsForSale(x) {
 	connection.query("SELECT * FROM products",
 	 function(err, res) {
+	 	var table = new Table({
+		    head: ['id', 'product name', 'price', 'quantity'], 
+		    colWidths: [10, 30, 20, 20]
+		});
 		if (err) {
 			throw err;
 		} else {
 			res.forEach(function (row) {
-				console.log("id: "+row.item_id +" - "+"product name: "+row.product_name 
-				+" - "+"price: "+row.price+" - "+"quantity: "+row.stock_quantity);
+				table.push( [row.item_id, row.product_name, row.price, row.stock_quantity]
+				);
+				// console.log("id: "+row.item_id +" - "+"product name: "+row.product_name 
+				// +" - "+"price: "+row.price+" - "+"quantity: "+row.stock_quantity);
 
 			})
+			console.log(table.toString());
 			if (!x) {
-			mainMenu();	
+			managerMainMenu();	
 			} else if (x === "inventory") {
 				addToInventory();
 			} else if (x === "product") {
@@ -76,6 +84,10 @@ function viewProductsForSale(x) {
 function viewLowInventory() {
 	connection.query("SELECT * FROM products",
 	 function(err, res) {
+	 	var table = new Table({
+		    head: ['id', 'product name','quantity'], 
+		    colWidths: [10, 30, 20]
+		});
 		if (err) {
 			throw err;
 		} else {
@@ -83,18 +95,22 @@ function viewLowInventory() {
 			res.forEach(function (row) {
 				if (row.stock_quantity < 5) {
 					lowCounter++;
-					console.log("id: "+row.item_id+" - item: "+row.product_name+" - quantity: "+row.stock_quantity);
+					table.push( [row.item_id, row.product_name, row.stock_quantity]
+					);
+					// console.log("id: "+row.item_id+" - item: "+row.product_name+" - quantity: "+row.stock_quantity);
 				} 
 			})
+
 			if (lowCounter === 0) {
 				console.log("You're well stocked!");
 				viewProductsForSale();
 			} else {
-				mainMenu();
+				console.log(table.toString());
+				managerMainMenu();
 			}
 		}	
 	});	
-}
+};
 
 //function which displays a prompt that will let the manager "add more" of any item currently in the store.
 function addToInventory() {
@@ -142,7 +158,7 @@ function addToInventory() {
 			}
 		);	
     });
-}
+};
 
 //function to add new product
 function addNewProduct() {
@@ -174,20 +190,33 @@ function addNewProduct() {
 	  },
 	  
 	]).then(function(answers) {
-		connection.query("INSERT INTO products SET ?",
-		    {
-		      product_name: answers.name,
-		      department_name: answers.dept,
-		      price: answers.price,
-		      stock_quantity: answers.quantity,
-		      product_sales: 0
-		    },
-		    function(err, res) {
-		      console.log("product added!");
-		      viewProductsForSale();
+		connection.query("SELECT department_name FROM departments WHERE ?",
+			{
+				department_name: answers.dept
+			},
+			function(err, res) {
+		      console.log(res);
+		      if (!res.length) {
+		      	console.log("department does not exist - must add departments in supervisor view");
+		      	managerMainMenu();
+		      } else {
+		      	connection.query("INSERT INTO products SET ?",
+				    {
+				      product_name: answers.name,
+				      department_name: answers.dept,
+				      price: answers.price,
+				      stock_quantity: answers.quantity,
+				      product_sales: 0
+				    },
+				    function(err, res) {
+				      console.log("product added!");
+				      viewProductsForSale();
+				    }
+			 	 );
+		      }
 		    }
-	  	);
+	  	); 	
     });	
-}
+};
 
 

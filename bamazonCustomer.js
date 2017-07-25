@@ -1,5 +1,6 @@
 var mysql = require("mysql");
 var inquirer = require("inquirer");
+var Table = require('cli-table');
 
 var connection = mysql.createConnection({
 	host: "localhost",
@@ -23,14 +24,22 @@ connection.connect(function(err) {
 function displayAllItems() {
 	connection.query("SELECT * FROM products",
 	 function(err, res) {
+	 	var table = new Table({
+		    head: ['id', 'product name', 'price'], 
+		    colWidths: [10, 30, 20]
+			});
 		if (err) {
 			throw err;
 		} else {
 			res.forEach(function (row) {
-				console.log("id: "+row.item_id + " - " + "product name: "+row.product_name 
-				+ " - " + "price: "+row.price);
+				//figured I'd add a fancy table here too
+				table.push( [row.item_id, row.product_name, row.price]
+				);
+				// console.log("id: "+row.item_id + " - " + "product name: "+row.product_name 
+				// + " - " + "price: "+row.price);
 
 			})
+			console.log(table.toString());
 			beginShopping();	
 		}	
 	});

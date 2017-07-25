@@ -16,11 +16,11 @@ var connection = mysql.createConnection({
 connection.connect(function(err) {
 	if (err) throw err;
 	console.log("connected as id " + connection.threadId);
-	start();
+	supervisorMainMenu();
 	
 });
 
-function start() {
+function supervisorMainMenu() {
 	inquirer.prompt ([
 	  {	
 	  	type: "list",
@@ -44,8 +44,8 @@ function start() {
 
 
 function viewProductSales() {
-	var query = "SELECT departments.department_id, products.department_name, departments.over_head_costs, SUM(products.product_sales)";
-	query += "FROM products LEFT JOIN departments ON products.department_name = departments.department_name ";
+	var query = "SELECT departments.department_id, departments.department_name, departments.over_head_costs, SUM(products.product_sales)";
+	query += "FROM products RIGHT JOIN departments ON products.department_name = departments.department_name ";
 	query += "GROUP BY departments.department_id, products.department_name";
 	connection.query(query, function(err, res){
 		var table = new Table({
@@ -71,7 +71,7 @@ function viewProductSales() {
 			}
 		});
 		console.log(table.toString());
-		start();
+		supervisorMainMenu();
 	});
 }
 
@@ -99,12 +99,10 @@ function createDept() {
 		    },
 		    function(err, res) {
 		      console.log("department created!\n");
-		      start();
+		      supervisorMainMenu();
 		    }
 	  	);
     });	
 }
-
-
 
 
