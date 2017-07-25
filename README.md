@@ -2,7 +2,7 @@
 
 Amazon-like storefront using SQL database(s) that allows initial choice of user view, manager view or supervisor view 
 
-## DEMO VIDEO: 
+## DEMO VIDEO: <iframe width="560" height="315" src="https://www.youtube.com/embed/p_tQ1PjrvGA" frameborder="0" allowfullscreen></iframe>
 
 
 ### User View
