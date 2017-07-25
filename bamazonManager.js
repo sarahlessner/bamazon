@@ -14,20 +14,23 @@ var connection = mysql.createConnection({
 });
 
 connection.connect(function(err) {
-	if (err) throw err;
-	console.log("connected as id " + connection.threadId);
-	managerMainMenu();
-	
+	if (err) throw err;	
 });
 
+//call back to start menu
+var myMMCallback;
+exports.setMMCallback = function(mmCallback) {
+	myMMCallback = mmCallback;
+}
+
 //display menu of options on load
-function managerMainMenu() {
+exports.managerMainMenu = function() {
 	inquirer.prompt ([
 		{
 	    type: "list",
 		message: "What would you like to do? ",
 		name: "list",
-		choices: ['View Products for Sale', 'View Low Inventory', 'Add to Inventory', 'Add New Product', 'Quit']
+		choices: ['View Products for Sale', 'View Low Inventory', 'Add to Inventory', 'Add New Product', 'Go to Main Menu']
 	  }
 	]).then(function(answers) {
 		connection.query("SELECT stock_quantity FROM products WHERE ?", { item_id: answers.id }, 
@@ -42,8 +45,8 @@ function managerMainMenu() {
 		        } else if (answers.list === 'Add New Product'){
 		        	var p = "product";
 		        	viewProductsForSale(p);
-		        } else if (answers.list === 'Quit'){
-		        	connection.end();
+		        } else if (answers.list === 'Go to Main Menu'){
+		        	myMMCallback();
 		        } else {
 		        	throw err;
 		        	return;
@@ -67,11 +70,10 @@ function viewProductsForSale(x) {
 				);
 				// console.log("id: "+row.item_id +" - "+"product name: "+row.product_name 
 				// +" - "+"price: "+row.price+" - "+"quantity: "+row.stock_quantity);
-
 			})
 			console.log(table.toString());
 			if (!x) {
-			managerMainMenu();	
+			exports.managerMainMenu();	
 			} else if (x === "inventory") {
 				addToInventory();
 			} else if (x === "product") {
@@ -106,7 +108,7 @@ function viewLowInventory() {
 				viewProductsForSale();
 			} else {
 				console.log(table.toString());
-				managerMainMenu();
+				exports.managerMainMenu();
 			}
 		}	
 	});	
@@ -198,7 +200,7 @@ function addNewProduct() {
 		      console.log(res);
 		      if (!res.length) {
 		      	console.log("department does not exist - must add departments in supervisor view");
-		      	managerMainMenu();
+		      	exports.managerMainMenu();
 		      } else {
 		      	connection.query("INSERT INTO products SET ?",
 				    {
@@ -219,4 +221,6 @@ function addNewProduct() {
     });	
 };
 
-
+exports.connectionEnd = function () {
+	connection.end();
+}

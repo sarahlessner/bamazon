@@ -15,32 +15,36 @@ var connection = mysql.createConnection({
 
 connection.connect(function(err) {
 	if (err) throw err;
-	console.log("connected as id " + connection.threadId);
-	supervisorMainMenu();
-	
 });
 
-function supervisorMainMenu() {
+var myMMCallback;
+exports.setMMCallback = function(mmCallback) {
+	myMMCallback = mmCallback;
+}
+
+
+exports.supervisorMainMenu = function() {
 	inquirer.prompt ([
 	  {	
 	  	type: "list",
 	  	message: "What would you like to do?",
 	    name: "supervisor",
-	    choices: ['View Product Sales', 'Create New Department', 'Exit']
+	    choices: ['View Product Sales', 'Create New Department', 'Return to Start Menu']
 	  }
 	]).then(function(answers) {
 		if (answers.supervisor === 'View Product Sales') {
 			viewProductSales();
 		} else if (answers.supervisor === 'Create New Department') {
 			createDept();
-		} else if (answers.supervisor === 'Exit') {
-			connection.end();
+		} else if (answers.supervisor === 'Return to Start Menu') {
+			myMMCallback();
 		} else {
+			//should not reach this condition 
 			console.log("error");
-			connection.end();
 		}
     });	
 }
+
 
 
 function viewProductSales() {
@@ -55,23 +59,13 @@ function viewProductSales() {
 		res.forEach(function(row) {
 			var totalProfit = (row['SUM(products.product_sales)'] - row.over_head_costs);
 			//added this because manager could add product/department which may not be reflected in departments table
-			if(!row.department_id) {
-				connection.query("INSERT INTO departments SET ?",
-			    {
-			      department_name: row.department_name,
-			      over_head_costs: 1000.00 //arbitrary/default overhead cost
-			    },
-			    function(err, res) {
-			    }
-	  			);
-			} else {
-				table.push(
-				    [row.department_id, row.department_name, row.over_head_costs, row['SUM(products.product_sales)'], totalProfit ]
-				);	
-			}
+			table.push(
+			    [row.department_id, row.department_name, row.over_head_costs, row['SUM(products.product_sales)'], totalProfit ]
+			);	
+			
 		});
 		console.log(table.toString());
-		supervisorMainMenu();
+		exports.supervisorMainMenu();
 	});
 }
 
@@ -99,10 +93,12 @@ function createDept() {
 		    },
 		    function(err, res) {
 		      console.log("department created!\n");
-		      supervisorMainMenu();
+		      exports.supervisorMainMenu();
 		    }
 	  	);
     });	
 }
 
-
+exports.connectionEnd = function () {
+	connection.end();
+}

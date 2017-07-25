@@ -15,13 +15,16 @@ var connection = mysql.createConnection({
 
 connection.connect(function(err) {
 	if (err) throw err;
-	console.log("connected as id " + connection.threadId);
-	
-	displayAllItems();
 	
 });
+
+var myMMCallback;
+exports.setMMCallback = function(mmCallback) {
+	myMMCallback = mmCallback;
+}
+
 //display all items for sale on load
-function displayAllItems() {
+exports.displayAllItems = function() {
 	connection.query("SELECT * FROM products",
 	 function(err, res) {
 	 	var table = new Table({
@@ -128,10 +131,13 @@ function buyMore() {
 		}
 		]).then(function(answers) {
 			if (answers.keepshopping) {
-				displayAllItems();
+				exports.displayAllItems();
 			} else {
-				connection.end();
+				myMMCallback();
 			}
 		});
 }
 
+exports.connectionEnd = function () {
+	connection.end();
+}
